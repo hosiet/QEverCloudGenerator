@@ -1,0 +1,23 @@
+if(NOT USE_QT5)
+  find_package(Qt4 COMPONENTS QTCORE OPTIONAL QUIET)
+  if(NOT QT_QTCORE_LIBRARY)
+    message(STATUS "Qt4's core was not found, trying to find Qt5's libraries")
+    set(USE_QT5 1)
+  endif()
+endif()
+
+if(USE_QT5)
+  find_package(Qt5Core REQUIRED)
+  set(QT_INCLUDES "${QT_INCLUDES} ${Qt5Core_INCLUDE_DIRS}")
+  set(QT_LIBRARIES "${QT_LIBRARIES} ${Qt5Core_LIBRARIES}")
+  set(QT_DEFINITIONS "${QT_DEFINITIONS} ${Qt5Core_DEFINITIONS}")
+else()
+  find_package(Qt4 COMPONENTS QTCORE REQUIRED)
+  include(${QT_USE_FILE})
+endif()
+
+include_directories(SYSTEM "${QT_INCLUDES} ${SYSTEM}")
+add_definitions(${QT_DEFINITIONS})
+
+set(CMAKE_AUTOMOC ON)
+set(CMAKE_INCLUDE_CURRENT_DIR "ON")
