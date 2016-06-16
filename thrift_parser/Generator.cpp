@@ -4,6 +4,7 @@
 
 #include <QDir>
 #include <QFile>
+#include <QMap>
 
 namespace {
     QStringList includeList;
@@ -42,7 +43,7 @@ void writeHeaderHeader(QTextStream& out, QString fileName, QStringList moreInclu
 
     if(fileName != "EDAMErrorCode.h") {
         QStringList includes;
-        includes << "QMap" << "QList" << "QSet" << "QString" << "QStringList" << "QByteArray" << "QDateTime";
+        includes << "QMap" << "QList" << "QSet" << "QString" << "QStringList" << "QByteArray" << "QDateTime" << "QMetaType";
         for(QString include: includes) {
             out << "#include <" << include << ">" << endl;
         }
@@ -61,10 +62,19 @@ void writeHeaderHeader(QTextStream& out, QString fileName, QStringList moreInclu
     out << endl;
 }
 
-void writeHeaderFooter(QTextStream& out, QString fileName)
+void writeHeaderFooter(QTextStream& out, QString fileName, QStringList extraContent = QStringList())
 {
     out << endl;
     out << "}" << endl;
+
+    for(int i = 0, size = extraContent.size(); i < size; ++i)
+    {
+        const QString & extraContentLine = extraContent[i];
+        if (!extraContentLine.isEmpty()) {
+            out << extraContentLine << endl;
+        }
+    }
+
     QString guard = QString("QEVERCLOUD_GENERATED_%1_H").arg(fileName.split('.')[0].toUpper());
     out << "#endif // " << guard << endl;
 }
@@ -554,12 +564,13 @@ void generateTypes(Parser* parser, QString outPath)
     houtEDAMErrorCode << endl;
 
     for(const Parser::TypeDefinition& t : parser->typedefs()) {
-/*        if(t.name == "Timestamp") {
-            if(!t.docComment.isEmpty()) {
-                QString docComment = t.docComment;
-                hout << "/** \\class Timestamp\n" + docComment.remove("/**") << endl << endl;
-            }
-        } else*/ {
+        // if(t.name == "Timestamp") {
+        //     if(!t.docComment.isEmpty()) {
+        //         QString docComment = t.docComment;
+        //         hout << "/** \\class Timestamp\n" + docComment.remove("/**") << endl << endl;
+        //     }
+        // } else
+        {
             if(!t.docComment.isEmpty()) {
                 hout << t.docComment << endl;
             }
@@ -899,7 +910,17 @@ void generateServices(Parser* parser, QString outPath)
         hout << "    QString authenticationToken_;" << endl;
         hout << "};" << endl << endl;
     }
-    writeHeaderFooter(hout, headerFileName);
+
+    QStringList metatypeDeclarations;
+    metatypeDeclarations.reserve(6);
+    metatypeDeclarations << "Q_DECLARE_METATYPE(QList< qevercloud::Notebook >)";
+    metatypeDeclarations << "Q_DECLARE_METATYPE(QList< qevercloud::Tag >)";
+    metatypeDeclarations << "Q_DECLARE_METATYPE(QList< qevercloud::SavedSearch >)";
+    metatypeDeclarations << "Q_DECLARE_METATYPE(QList< qevercloud::NoteVersionId >)";
+    metatypeDeclarations << "Q_DECLARE_METATYPE(QList< qevercloud::SharedNotebook >)";
+    metatypeDeclarations << "Q_DECLARE_METATYPE(QList< qevercloud::LinkedNotebook >)";
+
+    writeHeaderFooter(hout, headerFileName, metatypeDeclarations);
 
     const QString bodyFileName = "services.cpp";
     QFile bodyFile(QDir(outPath).absoluteFilePath(bodyFileName));
