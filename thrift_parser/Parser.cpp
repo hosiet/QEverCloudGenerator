@@ -2,6 +2,7 @@
 #include <stdexcept>
 #include <QMap>
 #include <QtDebug>
+#include <cstdlib>
 
 void* ParseAlloc(void *(*mallocProc)(std::size_t));
 void ParseFree(void *p, void (*freeProc)(void*));
