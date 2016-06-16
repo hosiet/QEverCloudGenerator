@@ -1,5 +1,5 @@
-#ifndef LEXER_H
-#define LEXER_H
+#ifndef QEVERCLOUD_GENERATOR_THRIFT_PARSER_LEXER_H
+#define QEVERCLOUD_GENERATOR_THRIFT_PARSER_LEXER_H
 
 #include <QObject>
 
@@ -45,4 +45,4 @@ private:
     bool isNextNextChar(QChar testChar, QString text, int pos);
 };
 
-#endif // LEXER_H
+#endif // QEVERCLOUD_GENERATOR_THRIFT_PARSER_LEXER_H

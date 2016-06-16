@@ -1,5 +1,5 @@
-#ifndef PARSER_H
-#define PARSER_H
+#ifndef QEVERCLOUD_GENERATOR_PARSER_H
+#define QEVERCLOUD_GENERATOR_PARSER_H
 
 #include <QObject>
 #include "thrift_lemon.h"
@@ -217,4 +217,4 @@ private:
 inline Parser::Type::~Type() {}
 inline Parser::ConstValue::~ConstValue() {}
 
-#endif // PARSER_H
+#endif // QEVERCLOUD_GENERATOR_PARSER_H

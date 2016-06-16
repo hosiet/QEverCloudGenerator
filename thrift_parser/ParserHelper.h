@@ -1,5 +1,5 @@
-#ifndef PARSERHELPER_H
-#define PARSERHELPER_H
+#ifndef QEVERCLOUD_GENERATOR_THRIFT_PARSER_PARSER_HELPER_H
+#define QEVERCLOUD_GENERATOR_THRIFT_PARSER_PARSER_HELPER_H
 
 #include <QString>
 #include "Parser.h"
@@ -104,4 +104,4 @@ public:
     QSharedPointer<Parser::Type> valueType;
 };
 
-#endif // PARSERHELPER_H
+#endif // QEVERCLOUD_GENERATOR_THRIFT_PARSER_PARSER_HELPER_H

@@ -1,7 +1,5 @@
-
 #include "Generator.h"
 #include "../qt4helpers.h"
-
 #include <QDir>
 #include <QFile>
 #include <QMap>

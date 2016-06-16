@@ -31,17 +31,17 @@
 }
 
 thrift ::= body END_OF_FILE.
-body ::= . 
-body ::= include body. 
+body ::= .
+body ::= include body.
 body ::= cppinclude body.
-body ::= namespace body. 
-body ::= const body. 
-body ::= typedef body. 
-body ::= enum body. 
+body ::= namespace body.
+body ::= const body.
+body ::= typedef body.
+body ::= enum body.
 body ::= struct body.
-body ::= union body. 
+body ::= union body.
 body ::= exception body.
-body ::= service body. 
+body ::= service body.
 
 include ::=  INCLUDE STRING_VALUE(A).
 {

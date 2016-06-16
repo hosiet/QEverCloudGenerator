@@ -1,8 +1,8 @@
-#ifndef GENERATOR_H
-#define GENERATOR_H
+#ifndef QEVERCLOUD_GENERATOR_THRIFT_PARSER_GENERATOR_H
+#define QEVERCLOUD_GENERATOR_THRIFT_PARSER_GENERATOR_H
 
 #include "Parser.h"
 
 void generateSources(Parser* parser, QString outPath);
 
-#endif // GENERATOR_H
+#endif // QEVERCLOUD_GENERATOR_THRIFT_PARSER_GENERATOR_H
