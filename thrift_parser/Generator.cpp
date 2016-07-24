@@ -4,6 +4,9 @@
 #include <QFile>
 #include <QMap>
 
+static const char * disclaimer = "// This file is generated from Evernote Thrift API "
+                                 "and is a part of the QEverCloud project";
+
 namespace {
     QStringList includeList;
     QMap<QString, QString> typedefMap;
@@ -28,9 +31,7 @@ QString clearTypedef(QString s)
     return s;
 }
 
-
-const QString disclaimer = "// This file is generated from Evernote Thrift API and is a part of the QEverCloud project";
-void writeHeaderHeader(QTextStream& out, QString fileName, QStringList moreIncludes = QStringList())
+void writeHeaderHeader(QTextStream & out, QString fileName, QStringList moreIncludes = QStringList())
 {
     out << disclaimer << endl;
     out << endl;
@@ -39,13 +40,15 @@ void writeHeaderHeader(QTextStream& out, QString fileName, QStringList moreInclu
     out << "#define " << guard << endl;
     out << endl;
 
-    if(fileName != "EDAMErrorCode.h") {
+    if (fileName != "EDAMErrorCode.h") {
+        out << "#include <qevercloud/Optional.h>" << endl;
+        out << "#include <qevercloud/export.h>" << endl;
         QStringList includes;
-        includes << "QMap" << "QList" << "QSet" << "QString" << "QStringList" << "QByteArray" << "QDateTime" << "QMetaType";
+        includes << "QMap" << "QList" << "QSet" << "QString" << "QStringList"
+                 << "QByteArray" << "QDateTime" << "QMetaType";
         for(QString include: includes) {
             out << "#include <" << include << ">" << endl;
         }
-        out << "#include \"../Optional.h\"" << endl;
         for(QString include : moreIncludes) {
             if(include.startsWith('<')) {
                 out << "#include " << include << endl;
@@ -57,13 +60,11 @@ void writeHeaderHeader(QTextStream& out, QString fileName, QStringList moreInclu
     }
     out << "namespace qevercloud {";
     out << endl;
-    out << endl;
 }
 
-void writeHeaderFooter(QTextStream& out, QString fileName, QStringList extraContent = QStringList())
+void writeHeaderFooter(QTextStream & out, QString fileName, QStringList extraContent = QStringList())
 {
-    out << endl;
-    out << "}" << endl;
+    out << "} // namespace qevercloud" << endl;
 
     for(int i = 0, size = extraContent.size(); i < size; ++i)
     {
@@ -74,13 +75,14 @@ void writeHeaderFooter(QTextStream& out, QString fileName, QStringList extraCont
     }
 
     QString guard = QString("QEVERCLOUD_GENERATED_%1_H").arg(fileName.split('.')[0].toUpper());
+    out << endl;
     out << "#endif // " << guard << endl;
 }
 
 void writeBodyHeader(QTextStream& out, QString headerFileName, QStringList moreIncludes = QStringList()) {
     out << disclaimer << endl;
     out << endl;
-    out << "#include \"" << headerFileName << "\"" << endl;
+    out << "#include <qevercloud/generated/" << headerFileName << ">" << endl;
     out << "#include \"../impl.h\"" << endl;
     for(QString include : moreIncludes) {
         if(include.startsWith('<')) {
@@ -91,7 +93,6 @@ void writeBodyHeader(QTextStream& out, QString headerFileName, QStringList moreI
     }
     out << endl;
     out << "namespace qevercloud {";
-    out << endl;
     out << endl;
 }
 
@@ -320,49 +321,68 @@ QString valueToStr(QSharedPointer<Parser::ConstValue> value, QSharedPointer<Pars
 }
 
 
-void generateConstants(Parser* parser, QString outPath)
+void generateConstants(Parser * parser, QString outPath)
 {
     const QString headerFileName = "constants.h";
     QFile headerFile(QDir(outPath).absoluteFilePath(headerFileName));
-    if(!headerFile.open(QIODevice::WriteOnly|QIODevice::Text)) {
+    if (!headerFile.open(QIODevice::WriteOnly|QIODevice::Text)) {
         throw std::runtime_error(QString("Can't open file: %1").arg(headerFile.fileName()).toStdString());
     }
+
+    // Generate header:
+
     QTextStream hout(&headerFile);
     hout.setCodec("UTF-8");
+
     writeHeaderHeader(hout, headerFileName);
+
     QString file;
-    for(const Parser::Constant& c: parser->constants()) {
-        if(file != c.file) {
+    for(const Parser::Constant & c: parser->constants())
+    {
+        if (file != c.file) {
             file = c.file;
             hout << endl << "// " << c.file << endl;
         }
+
         if(!c.docComment.isEmpty()) {
             hout << c.docComment << endl;
         }
-        hout << "extern const " << typeToStr(c.type, c.name) << " " << c.name << ";" << endl << endl;
+
+        hout << "QEVERCLOUD_EXPORT extern const " << typeToStr(c.type, c.name)
+             << " " << c.name << ";" << endl << endl;
     }
+
     writeHeaderFooter(hout, headerFileName);
+
+    // Generate source:
 
     const QString bodyFileName = "constants.cpp";
     QFile bodyFile(QDir(outPath).absoluteFilePath(bodyFileName));
-    if(!bodyFile.open(QIODevice::WriteOnly|QIODevice::Text)) {
+    if (!bodyFile.open(QIODevice::WriteOnly|QIODevice::Text)) {
         throw std::runtime_error(QString("Can't open file: %1").arg(bodyFile.fileName()).toStdString());
     }
+
     QTextStream bout(&bodyFile);
     bout.setCodec("UTF-8");
+
     writeBodyHeader(bout, headerFileName);
+
     file = "";
-    for(const Parser::Constant& c: parser->constants()) {
-        if(file != c.file) {
+    for(const Parser::Constant & c: parser->constants())
+    {
+        if (file != c.file) {
             file = c.file;
             bout << endl << "// " << c.file << endl << endl;
         }
-        if(c.value.isNull()) {
+
+        if (c.value.isNull()) {
             throw std::runtime_error(QString("Constant without a value: %1").arg(c.name).toStdString());
         }
-        bout << "/** @ingroup edamconst */" << endl;
-        bout << "const " << typeToStr(c.type, c.name) << " " << c.name << " = " << valueToStr(c.value, c.type, c.name) << ";" << endl;
+
+        bout << "QEVERCLOUD_EXPORT const " << typeToStr(c.type, c.name) << " "
+             << c.name << " = " << valueToStr(c.value, c.type, c.name) << ";" << endl;
     }
+
     writeBodyFooter(bout);
 }
 
@@ -1124,31 +1144,31 @@ void generateServices(Parser* parser, QString outPath)
 
 }
 
-void generateSources(Parser* parser, QString outPath)
+void generateSources(Parser * parser, QString outPath)
 {
-    if(parser->unions().count() > 0) {
+    if (parser->unions().count() > 0) {
         throw std::runtime_error("unions are not suported.");
     }
 
     baseTypes << "bool" << "byte" << "i16" << "i32" << "i64" << "double" << "string" << "binary";
 
-    for(const Parser::Structure& s : parser->structures()) {
+    for(const Parser::Structure & s : parser->structures()) {
         allstructs << s.name;
     }
 
-    for(const Parser::Enumeration& e : parser->enumerations()) {
+    for(const Parser::Enumeration & e : parser->enumerations()) {
         allenums << e.name;
     }
 
-    for(const Parser::Include& inc : parser->includes()) {
+    for(const Parser::Include & inc : parser->includes()) {
         QString s = inc.name;
         s.replace(QChar('\"'), QString(""));
         s.chop(QString("thrift").length());
         includeList << s;
     }
 
-    for(const Parser::TypeDefinition& td : parser->typedefs()) {
-        if(td.type.dynamicCast<Parser::BaseType>()) {
+    for(const Parser::TypeDefinition & td : parser->typedefs()) {
+        if (td.type.dynamicCast<Parser::BaseType>()) {
             typedefMap[td.name] = td.type.dynamicCast<Parser::BaseType>()->basetype;
         }
     }
