@@ -110,7 +110,7 @@ enum EDAMErrorCode {
 }
 
 /**
- * This exception is thrown by EDAM procedures when a call fails as a result of 
+ * This exception is thrown by EDAM procedures when a call fails as a result of
  * a problem that a caller may be able to resolve.  For example, if the user
  * attempts to add a note to their account which would exceed their storage
  * quota, this type of exception may be thrown to indicate the source of the
