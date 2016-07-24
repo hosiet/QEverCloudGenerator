@@ -3,6 +3,6 @@
 
 #include "Parser.h"
 
-void generateSources(Parser* parser, QString outPath);
+void generateSources(Parser * parser, QString outPath);
 
 #endif // QEVERCLOUD_GENERATOR_THRIFT_PARSER_GENERATOR_H

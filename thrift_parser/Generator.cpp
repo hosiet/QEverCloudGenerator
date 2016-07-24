@@ -31,7 +31,9 @@ QString clearTypedef(QString s)
     return s;
 }
 
-void writeHeaderHeader(QTextStream & out, QString fileName, QStringList moreIncludes = QStringList())
+void writeHeaderHeader(QTextStream & out, QString fileName,
+                       QStringList additionalPreIncludes = QStringList(),
+                       QStringList additionalPostIncludes = QStringList())
 {
     out << disclaimer << endl;
     out << endl;
@@ -40,25 +42,51 @@ void writeHeaderHeader(QTextStream & out, QString fileName, QStringList moreIncl
     out << "#define " << guard << endl;
     out << endl;
 
-    if (fileName != "EDAMErrorCode.h") {
+    if (fileName != "EDAMErrorCode.h")
+    {
         out << "#include <qevercloud/Optional.h>" << endl;
-        out << "#include <qevercloud/export.h>" << endl;
+
+        if (fileName != "types_impl.h") {
+            out << "#include <qevercloud/export.h>" << endl;
+        }
+
+        for(QString include: additionalPreIncludes)
+        {
+            if(include.startsWith('<')) {
+                out << "#include " << include << endl;
+            }
+            else {
+                out << "#include \"" << include << "\"" << endl;
+            }
+        }
+
         QStringList includes;
         includes << "QMap" << "QList" << "QSet" << "QString" << "QStringList"
                  << "QByteArray" << "QDateTime" << "QMetaType";
         for(QString include: includes) {
             out << "#include <" << include << ">" << endl;
         }
-        for(QString include : moreIncludes) {
+
+        for(QString include : additionalPostIncludes)
+        {
             if(include.startsWith('<')) {
                 out << "#include " << include << endl;
-            } else {
+            }
+            else {
                 out << "#include \"" << include << "\"" << endl;
             }
         }
+
         out << endl;
     }
+    else
+    {
+        out << "#include <qevercloud/export.h>" << endl;
+        out << endl;
+    }
+
     out << "namespace qevercloud {";
+    out << endl;
     out << endl;
 }
 
@@ -99,7 +127,7 @@ void writeBodyHeader(QTextStream& out, QString headerFileName, QStringList moreI
 void writeBodyFooter(QTextStream& out)
 {
     out << endl;
-    out << "}" << endl;
+    out << "} // namespace qevercloud" << endl;
 }
 
 enum class MethodType {TypeName, WriteMethod, ReadMethod, ThriftFieldType, ReadTypeName, FuncParamType};
@@ -339,12 +367,18 @@ void generateConstants(Parser * parser, QString outPath)
     QString file;
     for(const Parser::Constant & c: parser->constants())
     {
-        if (file != c.file) {
+        if (file != c.file)
+        {
+            bool first = file.isEmpty();
+            if (!first) {
+                hout << endl;
+            }
+
             file = c.file;
-            hout << endl << "// " << c.file << endl;
+            hout << "// " << c.file << endl;
         }
 
-        if(!c.docComment.isEmpty()) {
+        if (!c.docComment.isEmpty()) {
             hout << c.docComment << endl;
         }
 
@@ -515,86 +549,103 @@ void readField(QTextStream& out, const Parser::Field& field, QString identPrefix
     out << "                " << fieldParent << field.name << " = v;" << endl;
 }
 
-void generateTypes(Parser* parser, QString outPath)
+void generateTypes(Parser * parser, QString outPath)
 {
     const QString headerFileName = "types.h";
     QFile headerFile(QDir(outPath).absoluteFilePath(headerFileName));
-    if(!headerFile.open(QIODevice::WriteOnly|QIODevice::Text)) {
+    if (!headerFile.open(QIODevice::WriteOnly|QIODevice::Text)) {
         throw std::runtime_error(QString("Can't open file: %1").arg(headerFile.fileName()).toStdString());
     }
+
     QTextStream hout(&headerFile);
     hout.setCodec("UTF-8");
+
     const QString EDAMErrorCodeHeaderFileName = "EDAMErrorCode.h";
-    writeHeaderHeader(hout, headerFileName, QStringList() << EDAMErrorCodeHeaderFileName << "<QSharedPointer>");
+    const QStringList additionalPreIncludes = QStringList() << EDAMErrorCodeHeaderFileName;
+    const QStringList additionalPostIncludes = QStringList() << "<QSharedPointer>" << "<QMetaType>";
+
+    writeHeaderHeader(hout, headerFileName, additionalPreIncludes, additionalPostIncludes);
 
     QFile EDAMErrorCodeHeaderFile(QDir(outPath).absoluteFilePath(EDAMErrorCodeHeaderFileName));
-    if(!EDAMErrorCodeHeaderFile.open(QIODevice::WriteOnly|QIODevice::Text)) {
+    if (!EDAMErrorCodeHeaderFile.open(QIODevice::WriteOnly|QIODevice::Text)) {
         throw std::runtime_error(QString("Can't open file: %1").arg(EDAMErrorCodeHeaderFile.fileName()).toStdString());
     }
+
     QTextStream houtEDAMErrorCode(&EDAMErrorCodeHeaderFile);
     houtEDAMErrorCode.setCodec("UTF-8");
+
     writeHeaderHeader(houtEDAMErrorCode, EDAMErrorCodeHeaderFileName);
 
-    for(const Parser::Enumeration& e: parser->enumerations()) {
-        if(e.name == "EDAMErrorCode") {
-            if(!e.docComment.isEmpty()) {
+    for(const Parser::Enumeration & e: parser->enumerations())
+    {
+        if (e.name == "EDAMErrorCode")
+        {
+            if (!e.docComment.isEmpty()) {
                 houtEDAMErrorCode << e.docComment << endl;
             }
-            houtEDAMErrorCode << "/** @ingroup edamtypes */" << endl;
-            houtEDAMErrorCode << "struct " << e.name << " {" << endl;
-            houtEDAMErrorCode << "    enum type {" << endl;
-            for(int i = 0; i< e.values.length(); i++) {
+
+            houtEDAMErrorCode << "struct QEVERCLOUD_EXPORT " << e.name << endl << "{" << endl;
+            houtEDAMErrorCode << "    enum type" << endl << "    {" << endl;
+
+            for(int i = 0; i< e.values.length(); i++)
+            {
                 const QPair<QString, QString>& v = e.values[i];
                 houtEDAMErrorCode << "        " << v.first;
-                if(!v.second.isEmpty()) {
+
+                if (!v.second.isEmpty()) {
                     houtEDAMErrorCode << " = " << v.second;
                 }
-                if(i < (e.values.length() - 1)) {
+
+                if (i < (e.values.length() - 1)) {
                     houtEDAMErrorCode << ",";
                 }
+
                 houtEDAMErrorCode << endl;
             }
+
             houtEDAMErrorCode << "    };" << endl;
             houtEDAMErrorCode << "};" << endl << endl;
-        } else {
-            if(!e.docComment.isEmpty()) {
+        }
+        else
+        {
+            if (!e.docComment.isEmpty()) {
                 hout << e.docComment << endl;
             }
-            hout << "/** @ingroup edamtypes */" << endl;
-            hout << "struct " << e.name << " {" << endl;
+
+            hout << "struct QEVERCLOUD_EXPORT " << e.name << " {" << endl;
             hout << "    enum type {" << endl;
-            for(int i = 0; i< e.values.length(); i++) {
-                const QPair<QString, QString>& v = e.values[i];
+
+            for(int i = 0; i< e.values.length(); i++)
+            {
+                const QPair<QString, QString> & v = e.values[i];
                 hout << "        " << v.first;
-                if(!v.second.isEmpty()) {
+
+                if (!v.second.isEmpty()) {
                     hout << " = " << v.second;
                 }
-                if(i < (e.values.length() - 1)) {
+
+                if (i < (e.values.length() - 1)) {
                     hout << ",";
                 }
+
                 hout << endl;
             }
+
             hout << "    };" << endl;
             hout << "};" << endl << endl;
         }
     }
+
     hout << endl;
     houtEDAMErrorCode << endl;
 
-    for(const Parser::TypeDefinition& t : parser->typedefs()) {
-        // if(t.name == "Timestamp") {
-        //     if(!t.docComment.isEmpty()) {
-        //         QString docComment = t.docComment;
-        //         hout << "/** \\class Timestamp\n" + docComment.remove("/**") << endl << endl;
-        //     }
-        // } else
-        {
-            if(!t.docComment.isEmpty()) {
-                hout << t.docComment << endl;
-            }
-            hout << "/** @ingroup edamtypes */" << endl;
-            hout << "typedef " << typeToStr(t.type, t.name) << " " << t.name << ";" << endl << endl;
+    for(const Parser::TypeDefinition & t : parser->typedefs())
+    {
+        if (!t.docComment.isEmpty()) {
+            hout << t.docComment << endl;
         }
+
+        hout << "typedef " << typeToStr(t.type, t.name) << " " << t.name << ";" << endl << endl;
     }
     hout << endl;
 
@@ -602,84 +653,107 @@ void generateTypes(Parser* parser, QString outPath)
     QList<Parser::Structure> ordered;
     QList<Parser::Structure> heap = parser->structures();
     int count = heap.count();
-    while(!heap.isEmpty()) {
+    while(!heap.isEmpty())
+    {
         int i = 0;
-        while(i < heap.count()) {
+        while(i < heap.count())
+        {
             const Parser::Structure s = heap[i];
             bool safeStruct = true;
-            for(const Parser::Field& f : s.fields) {
+            for(const Parser::Field & f : s.fields)
+            {
                 QString typeName = getIdentifier(f.type);
                 QString typeName2;
-                if(typeName.isEmpty()) {
-                  if(f.type.dynamicCast<Parser::SetType>()) {
-                    typeName = getIdentifier(f.type.dynamicCast<Parser::SetType>()->valueType);
-                  } else if(f.type.dynamicCast<Parser::ListType>()) {
-                    typeName = getIdentifier(f.type.dynamicCast<Parser::ListType>()->valueType);
-                  } else if(f.type.dynamicCast<Parser::MapType>()) {
-                    typeName = getIdentifier(f.type.dynamicCast<Parser::MapType>()->valueType);
-                    typeName2 = getIdentifier(f.type.dynamicCast<Parser::MapType>()->keyType);
-                  }
+                if (typeName.isEmpty())
+                {
+                    if (f.type.dynamicCast<Parser::SetType>()) {
+                        typeName = getIdentifier(f.type.dynamicCast<Parser::SetType>()->valueType);
+                    }
+                    else if (f.type.dynamicCast<Parser::ListType>()) {
+                        typeName = getIdentifier(f.type.dynamicCast<Parser::ListType>()->valueType);
+                    }
+                    else if (f.type.dynamicCast<Parser::MapType>()) {
+                        typeName = getIdentifier(f.type.dynamicCast<Parser::MapType>()->valueType);
+                        typeName2 = getIdentifier(f.type.dynamicCast<Parser::MapType>()->keyType);
+                    }
                 }
-                if(!typeName.isEmpty() && allstructs.contains(typeName) && !safe.contains(typeName)) {
+
+                if (!typeName.isEmpty() && allstructs.contains(typeName) && !safe.contains(typeName)) {
                     safeStruct = false;
                     break;
                 }
-                if(!typeName2.isEmpty() && allstructs.contains(typeName2) && !safe.contains(typeName2)) {
+
+                if (!typeName2.isEmpty() && allstructs.contains(typeName2) && !safe.contains(typeName2)) {
                     safeStruct = false;
                     break;
                 }
             }
-            if(safeStruct) {
+
+            if (safeStruct) {
                 safe << s.name;
                 ordered << s;
                 heap.removeAt(i);
-            } else {
-              i++;
+            }
+            else {
+                ++i;
             }
         }
-        if(count == heap.count()) {
+
+        if (count == heap.count()) {
             throw std::runtime_error("Struct sorting is in infinite loop!");
         }
     }
 
-    for(const Parser::Structure& s : ordered) {
-        if(!s.docComment.isEmpty()) {
+    for(const Parser::Structure & s : ordered)
+    {
+        if (!s.docComment.isEmpty()) {
             hout << s.docComment << endl;
-        } else {
+        }
+        else {
             hout << "/** NO DOC COMMENT ID FOUND */" << endl;
         }
-        hout << "/** @ingroup edamstruct */" << endl;
-        hout << "struct " << s.name << " {" << endl;
-        for(const Parser::Field& f : s.fields) {
-            if(s.fieldComments.contains(f.name)) {
+
+        hout << "struct QEVERCLOUD_EXPORT " << s.name << " {" << endl;
+        for(const Parser::Field & f : s.fields)
+        {
+            if (s.fieldComments.contains(f.name)) {
                 QStringList lines = s.fieldComments[f.name].split('\n');
                 for(QString line : lines) {
                     hout << "    " << line << endl;
                 }
-            } else {
+            }
+            else {
                 hout << "    " << "/** NOT DOCUMENTED */" << endl;
             }
+
             hout << "    " << fieldToStr(f) << ";" << endl;
         }
+
         hout << endl;
-        hout << QStringLiteral("    bool operator==(const %1& other) const").arg(s.name) << endl;
+        hout << QStringLiteral("    bool operator==(const %1 & other) const").arg(s.name) << endl;
         hout << "    {" << endl;
+
         bool first = true;
-        for(const Parser::Field& f : s.fields) {
+        for(const Parser::Field & f : s.fields)
+        {
             if(first) {
                 first = false;
                 hout << "        " << "return ";
-            } else {
+            }
+            else {
                 hout << "        " << "    && ";
             }
-            if(f.required == Parser::Field::RequiredFlag::Optional) {
+
+            if (f.required == Parser::Field::RequiredFlag::Optional) {
                 hout << QStringLiteral("%1.isEqual(other.%1)").arg(f.name) << endl;
-            } else {
+            }
+            else {
                 hout << QStringLiteral("(%1 == other.%1)").arg(f.name) << endl;
             }
         }
+
         hout << "        ;" << endl << "    }" << endl << endl;
-        hout << QStringLiteral("    bool operator!=(const %1& other) const").arg(s.name) << endl;
+        hout << QStringLiteral("    bool operator!=(const %1 & other) const").arg(s.name) << endl;
         hout << "    {" << endl;
         hout << QStringLiteral("        return !(*this == other);") << endl;
         hout << "    }" << endl << endl;
@@ -689,31 +763,33 @@ void generateTypes(Parser* parser, QString outPath)
     }
     hout << endl;
 
-    for(const Parser::Structure& e : parser->exceptions()) {
-        if(!e.docComment.isEmpty()) {
+    for(const Parser::Structure & e : parser->exceptions())
+    {
+        if (!e.docComment.isEmpty()) {
             hout << e.docComment << endl;
         }
-        hout << "/** @ingroup exceptions */" << endl;
-        hout << "class " << e.name << ": public EvernoteException {" << endl;
-        hout << "public:" << endl;
-        for(const Parser::Field& f : e.fields) {
+
+        hout << "class QEVERCLOUD_EXPORT " << e.name << ": public EvernoteException"
+             << endl << "{" << endl << "public:" << endl;
+
+        for(const Parser::Field & f : e.fields) {
             hout << "    " << fieldToStr(f) << ";" << endl;
         }
+
         hout << endl;
         hout << "    " << e.name << "() {}" << endl;
         hout << "    ~" << e.name << "() throw() {}" << endl;
-        hout << "    const char* what() const throw() Q_DECL_OVERRIDE;" << endl;
+        hout << "    const char * what() const throw() Q_DECL_OVERRIDE;" << endl;
         hout << "    virtual QSharedPointer<EverCloudExceptionData> exceptionData() const Q_DECL_OVERRIDE;" << endl;
         hout << "};" << endl << endl;
     }
 
     writeHeaderFooter(houtEDAMErrorCode, EDAMErrorCodeHeaderFileName);
-    //writeHeaderFooter(hout, headerFileName);
 
     hout << endl;
     hout << "}" << endl<< endl;
 
-    for(const Parser::Structure& s : ordered) {
+    for(const Parser::Structure & s : ordered) {
         hout << "Q_DECLARE_METATYPE(qevercloud::" << s.name << ")" << endl;
     }
     hout << endl;
@@ -721,36 +797,39 @@ void generateTypes(Parser* parser, QString outPath)
     QString guard = QString("QEVERCLOUD_GENERATED_%1_H").arg(headerFileName.split('.')[0].toUpper());
     hout << "#endif // " << guard << endl;
 
-
     const QString headerFileName2 = "types_impl.h";
     QFile headerFile2(QDir(outPath).absoluteFilePath(headerFileName2));
-    if(!headerFile2.open(QIODevice::WriteOnly|QIODevice::Text)) {
+    if (!headerFile2.open(QIODevice::WriteOnly|QIODevice::Text)) {
         throw std::runtime_error(QString("Can't open file: %1").arg(headerFile2.fileName()).toStdString());
     }
+
     QTextStream hout2(&headerFile2);
     hout2.setCodec("UTF-8");
-    writeHeaderHeader(hout2, headerFileName2, QStringList() << "../impl.h" << "types.h");
+
+    writeHeaderHeader(hout2, headerFileName2, QStringList() << "<qevercloud/generated/types.h>" << "../impl.h");
 
     hout2 << "/** @cond HIDDEN_SYMBOLS  */" << endl << endl;
 
-    for(const Parser::Structure& s : parser->structures()) {
-        hout2 << "void write" << s.name << "(ThriftBinaryBufferWriter& w, const " << s.name << "& s);" << endl;
-        hout2 << "void read" << s.name << "(ThriftBinaryBufferReader& r, " << s.name << "& s);" << endl;
+    for(const Parser::Structure & s : parser->structures()) {
+        hout2 << "void write" << s.name << "(ThriftBinaryBufferWriter & w, const " << s.name << " & s);" << endl;
+        hout2 << "void read" << s.name << "(ThriftBinaryBufferReader & r, " << s.name << " & s);" << endl;
     }
     hout2 << endl;
 
-    for(const Parser::Structure& e : parser->exceptions()) {
-        hout2 << "void read" << e.name << "(ThriftBinaryBufferReader& r, " << e.name << "& e);" << endl;
+    for(const Parser::Structure & e : parser->exceptions()) {
+        hout2 << "void read" << e.name << "(ThriftBinaryBufferReader & r, " << e.name << " & e);" << endl;
     }
     hout2 << endl;
-    for(const Parser::Enumeration& e : parser->enumerations()) {
-        hout2 << "void readEnum" << e.name << "(ThriftBinaryBufferReader& r, " << e.name << "::type& e);" << endl;
+
+    for(const Parser::Enumeration & e : parser->enumerations()) {
+        hout2 << "void readEnum" << e.name << "(ThriftBinaryBufferReader & r, " << e.name << "::type & e);" << endl;
     }
     hout2 << endl;
     hout2 << "/** @endcond */" << endl;
 
     writeHeaderFooter(hout2, headerFileName2);
 
+    // FIXME: remove this commented out code when it's clearly identified as non-needed
 //    QList<Parser::Structure> resultStructs = parser->structures();
 //    for(const Parser::Service& serv : parser->services()) {
 //        for(const Parser::Function &func : serv.functions) {
@@ -767,77 +846,101 @@ void generateTypes(Parser* parser, QString outPath)
 
     const QString bodyFileName = "types.cpp";
     QFile bodyFile(QDir(outPath).absoluteFilePath(bodyFileName));
-    if(!bodyFile.open(QIODevice::WriteOnly|QIODevice::Text)) {
+    if (!bodyFile.open(QIODevice::WriteOnly|QIODevice::Text)) {
         throw std::runtime_error(QString("Can't open file: %1").arg(bodyFile.fileName()).toStdString());
     }
+
     QTextStream bout(&bodyFile);
     bout.setCodec("UTF-8");
-    writeBodyHeader(bout, headerFileName, QStringList() << "types_impl.h");
+
+    writeBodyHeader(bout, headerFileName, QStringList() << "../impl.h" << "types_impl.h");
+
     bout << "/** @cond HIDDEN_SYMBOLS  */" << endl << endl;
-    for(const Parser::Structure& s : parser->structures()) {
-        bout << "void write" << s.name << "(ThriftBinaryBufferWriter& w, const " << s.name << "& s) {" << endl;
+    for(const Parser::Structure & s : parser->structures())
+    {
+        bout << "void write" << s.name << "(ThriftBinaryBufferWriter & w, const " << s.name << " & s) {" << endl;
         bout << "    w.writeStructBegin(\"" << s.name  << "\");" << endl;
         writeFields(bout, s.fields, s.name, "s.");
         bout << "    w.writeFieldStop();" << endl;
         bout << "    w.writeStructEnd();" << endl;
         bout << "}" << endl << endl;
 
-        bout << "void read" << s.name << "(ThriftBinaryBufferReader& r, " << s.name << "& s) {" << endl;
+        bout << "void read" << s.name << "(ThriftBinaryBufferReader & r, " << s.name << " & s) {" << endl;
         bout << "    QString fname;" << endl;
         bout << "    ThriftFieldType::type fieldType;" << endl;
         bout << "    qint16 fieldId;" << endl;
-        for(const Parser::Field& field : s.fields) {
-            if(field.required != Parser::Field::RequiredFlag::Optional) {
+
+        for(const Parser::Field & field : s.fields)
+        {
+            if (field.required != Parser::Field::RequiredFlag::Optional) {
                 bout << "    bool " << field.name << "_isset = false;" << endl;
             }
         }
+
         bout << "    r.readStructBegin(fname);" << endl;
-        bout << "    while(true) {" << endl;
+        bout << "    while(true)" << endl << "    {" << endl;
         bout << "        r.readFieldBegin(fname, fieldType, fieldId);" << endl;
-        bout << "        if(fieldType == ThriftFieldType::T_STOP) break;" << endl;
-        for(const Parser::Field& field : s.fields) {
-            bool optional = field.required == Parser::Field::RequiredFlag::Optional;
-            bout << "        if(fieldId == " << field.id << ") {" << endl;
-            bout << "            if(fieldType == " << typeToStr(field.type, s.name + "." + field.name, MethodType::ThriftFieldType) << ") {" << endl;
-            if(!optional) {
+        bout << "        if (fieldType == ThriftFieldType::T_STOP) break;" << endl;
+
+        for(const Parser::Field & field : s.fields)
+        {
+            bool optional = (field.required == Parser::Field::RequiredFlag::Optional);
+            bout << "        if (fieldId == " << field.id << ") {" << endl;
+            bout << "            if (fieldType == "
+                 << typeToStr(field.type, s.name + "." + field.name, MethodType::ThriftFieldType)
+                 << ") {" << endl;
+
+            if (!optional) {
                 bout << "                " << field.name << "_isset = true;" << endl;
             }
+
             readField(bout, field, s.name + ".", "s.");
             bout << "            } else {" << endl;
             bout << "                r.skip(fieldType);" << endl;
             bout << "            }" << endl;
             bout << "        } else" << endl;
         }
+
         bout << "        {" << endl;
         bout << "            r.skip(fieldType);" << endl;
         bout << "        }" << endl;
         bout << "        r.readFieldEnd();" << endl;
         bout << "    }" << endl;
         bout << "    r.readStructEnd();" << endl;
-        for(const Parser::Field& field : s.fields) {
-            if(field.required != Parser::Field::RequiredFlag::Optional) {
-                bout << "    if(!" << field.name << "_isset) throw ThriftException(ThriftException::Type::INVALID_DATA, \"" << s.name << "." << field.name << " has no value\");" << endl;
+
+        for(const Parser::Field & field : s.fields)
+        {
+            if (field.required != Parser::Field::RequiredFlag::Optional) {
+                bout << "    if(!" << field.name
+                     << "_isset) throw ThriftException(ThriftException::Type::INVALID_DATA, \""
+                     << s.name << "." << field.name << " has no value\");"
+                     << endl;
             }
         }
         bout << "}" << endl << endl;
     }
     bout << endl;
 
-    for(const Parser::Enumeration& e : parser->enumerations()) {
-        bout <<  "void readEnum" << e.name << "(ThriftBinaryBufferReader& r, " << e.name << "::type& e) {" << endl;
+    for(const Parser::Enumeration & e : parser->enumerations())
+    {
+        bout <<  "void readEnum" << e.name << "(ThriftBinaryBufferReader & r, " << e.name << "::type & e) {" << endl;
         bout << "    qint32 i;" << endl;
         bout << "    r.readI32(i);" << endl;
         bout << "    switch(i) {" << endl;
-        for(const QPair<QString, QString>& v : e.values) {
+
+        for(const QPair<QString, QString> & v : e.values) {
             QString value = e.name + "::" + v.first;
             bout << "    case static_cast<int>(" << value << "): e = " << value << "; break;" << endl;
         }
-        bout << "    default: throw ThriftException(ThriftException::Type::INVALID_DATA, \"Incorrect value for enum " << e.name << "\");" << endl;
+
+        bout << "    default: throw ThriftException(ThriftException::Type::INVALID_DATA, \"Incorrect value for enum "
+             << e.name << "\");" << endl;
         bout << "    }" << endl;
         bout << "}" << endl << endl;
     }
     bout << "/** @endcond */" << endl << endl;
     bout << endl;
+
     writeBodyFooter(bout);
 }
 
@@ -1167,7 +1270,8 @@ void generateSources(Parser * parser, QString outPath)
         includeList << s;
     }
 
-    for(const Parser::TypeDefinition & td : parser->typedefs()) {
+    for(const Parser::TypeDefinition & td : parser->typedefs())
+    {
         if (td.type.dynamicCast<Parser::BaseType>()) {
             typedefMap[td.name] = td.type.dynamicCast<Parser::BaseType>()->basetype;
         }
