@@ -2684,7 +2684,7 @@ service NoteStore {
    * @throws EDAMUserException <ul>
    *   <li>BAD_DATA_FORMAT "SharedNotebook.email" - if the email was not valid</li>
    *   <li>BAD_DATA_FORMAT "requireLogin" - if the SharedNotebook.allowPreview field was
-   *       not set, and the SharedNotebook.requireLogin was also not set or was set to 
+   *       not set, and the SharedNotebook.requireLogin was also not set or was set to
    *       false.</li>
    *   <li>PERMISSION_DENIED "SharedNotebook.recipientSettings" - if
    *       recipientSettings is set in the sharedNotebook.  Only the recipient

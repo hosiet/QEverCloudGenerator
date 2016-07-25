@@ -429,7 +429,7 @@ service UserStore {
    * <a href="http://dev.evernote.com/documentation/cloud/">dev.evernote.com</a>.
    * If you believe that your application requires permission to authenticate
    * using username and password instead of OAuth, please contact Evernote
-   * developer support by visiting 
+   * developer support by visiting
    * <a href="http://dev.evernote.com">dev.evernote.com</a>.
    *
    * @param username
@@ -450,12 +450,12 @@ service UserStore {
    *   by Evernote.
    *
    * @param deviceIdentifier
-   *   An optional string, no more than 32 characters in length, that uniquely identifies 
-   *   the device from which the authentication is being performed. This string allows 
-   *   the service to return the same authentication token when a given application 
-   *   requests authentication repeatedly from the same device. This may happen when the 
-   *   user logs out of an application and then logs back in, or when the application is 
-   *   uninstalled and later reinstalled. If no reliable device identifier can be created, 
+   *   An optional string, no more than 32 characters in length, that uniquely identifies
+   *   the device from which the authentication is being performed. This string allows
+   *   the service to return the same authentication token when a given application
+   *   requests authentication repeatedly from the same device. This may happen when the
+   *   user logs out of an application and then logs back in, or when the application is
+   *   uninstalled and later reinstalled. If no reliable device identifier can be created,
    *   this value should be omitted. If set, the device identifier must be between
    *   1 and EDAM_DEVICE_ID_LEN_MAX characters long and must match the regular expression
    *   EDAM_DEVICE_ID_REGEX.
@@ -466,8 +466,8 @@ service UserStore {
    *   allow them to distinguish between multiple tokens issued to the same client
    *   application on different devices. For example, the Evernote iOS client on
    *   a user's iPhone and iPad might pass the iOS device names "Bob's iPhone" and
-   *   "Bob's iPad". The device description must be between 1 and 
-   *   EDAM_DEVICE_DESCRIPTION_LEN_MAX characters long and must match the regular 
+   *   "Bob's iPad". The device description must be between 1 and
+   *   EDAM_DEVICE_DESCRIPTION_LEN_MAX characters long and must match the regular
    *   expression EDAM_DEVICE_DESCRIPTION_REGEX.
    *
    * @param supportsTwoFactor
@@ -478,7 +478,7 @@ service UserStore {
    *
    * @return
    *   <p>The result of the authentication. The level of detail provided in the returned
-   *   AuthenticationResult.User structure depends on the access level granted by 
+   *   AuthenticationResult.User structure depends on the access level granted by
    *   calling application's API key.</p>
    *   <p>If the user has two-factor authentication enabled,
    *   AuthenticationResult.secondFactorRequired will be set and
@@ -563,7 +563,7 @@ service UserStore {
    * and allows a user to effectively log out of Evernote from the perspective
    * of the application that holds the token. The authentication token that is
    * passed is immediately revoked and may not be used to call any authenticated
-   * EDAM function. 
+   * EDAM function.
    *
    * @param authenticationToken the authentication token to revoke.
    *
@@ -571,7 +571,7 @@ service UserStore {
    *   <li> DATA_REQUIRED "authenticationToken" - no authentication token provided
    *   <li> BAD_DATA_FORMAT "authenticationToken" - the authentication token is not well formed
    *   <li> INVALID_AUTH "authenticationToken" - the authentication token is invalid
-   *   <li> AUTH_EXPIRED "authenticationToken" - the authentication token is expired or 
+   *   <li> AUTH_EXPIRED "authenticationToken" - the authentication token is expired or
    *     is already revoked.
    * </ul>
    */
@@ -581,19 +581,19 @@ service UserStore {
 
   /**
    * This is used to take an existing authentication token that grants access
-   * to an individual user account (returned from 'authenticate', 
-   * 'authenticateLongSession' or an OAuth authorization) and obtain an additional 
+   * to an individual user account (returned from 'authenticate',
+   * 'authenticateLongSession' or an OAuth authorization) and obtain an additional
    * authentication token that may be used to access business notebooks if the user
    * is a member of an Evernote Business account.
    *
    * The resulting authentication token may be used to make NoteStore API calls
    * against the business using the NoteStore URL returned in the result.
    *
-   * @param authenticationToken 
+   * @param authenticationToken
    *   The authentication token for the user. This may not be a shared authentication
-   *   token (returned by NoteStore.authenticateToSharedNotebook or 
+   *   token (returned by NoteStore.authenticateToSharedNotebook or
    *   NoteStore.authenticateToSharedNote) or a business authentication token.
-   * 
+   *
    * @return
    *   The result of the authentication, with the token granting access to the
    *   business in the result's 'authenticationToken' field. The URL that must
@@ -604,9 +604,9 @@ service UserStore {
    * @throws EDAMUserException <ul>
    *   <li> PERMISSION_DENIED "authenticationToken" - the provided authentication token
    *        is a shared or business authentication token. </li>
-   *   <li> PERMISSION_DENIED "Business" - the user identified by the provided 
+   *   <li> PERMISSION_DENIED "Business" - the user identified by the provided
    *        authentication token is not currently a member of a business. </li>
-   *   <li> PERMISSION_DENIED "Business.status" - the business that the user is a 
+   *   <li> PERMISSION_DENIED "Business.status" - the business that the user is a
    *        member of is not currently in an active status. </li>
    * </ul>
    */
