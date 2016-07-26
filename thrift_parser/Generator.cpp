@@ -761,13 +761,13 @@ void readField(QTextStream & out, const Parser::Field & field, QString identPref
         QSharedPointer<Parser::Type> valueType = field.type.dynamicCast<Parser::ListType>()->valueType;
         QString valueReadMethod = typeToStr(valueType,  identPrefix + field.name, MethodType::ReadMethod);
         QString valueThriftType = typeToStr(valueType,  identPrefix + field.name, MethodType::ThriftFieldType);
-        out << indent << "quint32 size;" << endl;
+        out << indent << "qint32 size;" << endl;
         out << indent << "ThriftFieldType::type elemType;" << endl;
         out << indent << "r.readListBegin(elemType, size);" << endl;
         out << indent << "v.reserve(size);" << endl;
         out << indent << "if(elemType != " << valueThriftType << ") throw ThriftException(ThriftException::Type::INVALID_DATA, \"Incorrect list type ("
             << identPrefix + field.name <<")\");" << endl;
-        out << indent << "for(quint32 i = 0; i < size; i++) {" << endl;
+        out << indent << "for(qint32 i = 0; i < size; i++) {" << endl;
         out << indent << "    " << typeToStr(valueType, identPrefix + field.name, MethodType::ReadTypeName)  << " elem;" << endl;
         out << indent << "    " << valueReadMethod << "elem);" << endl;
         out << indent << "    v.append(elem);" << endl;
@@ -779,13 +779,13 @@ void readField(QTextStream & out, const Parser::Field & field, QString identPref
         QSharedPointer<Parser::Type> valueType = field.type.dynamicCast<Parser::SetType>()->valueType;
         QString valueReadMethod = typeToStr(valueType,  identPrefix + field.name, MethodType::ReadMethod);
         QString valueThriftType = typeToStr(valueType,  identPrefix + field.name, MethodType::ThriftFieldType);
-        out << indent << "quint32 size;" << endl;
+        out << indent << "qint32 size;" << endl;
         out << indent << "ThriftFieldType::type elemType;" << endl;
         out << indent << "r.readSetBegin(elemType, size);" << endl;
         out << indent << "v.reserve(size);" << endl;
         out << indent << "if(elemType != " << valueThriftType << ") throw ThriftException(ThriftException::Type::INVALID_DATA, \"Incorrect set type ("
             << identPrefix + field.name <<")\");" << endl;
-        out << indent << "for(quint32 i = 0; i < size; i++) {" << endl;
+        out << indent << "for(qint32 i = 0; i < size; i++) {" << endl;
         out << indent << "    " << typeToStr(valueType, identPrefix + field.name, MethodType::ReadTypeName)  << " elem;"<< endl;
         out << indent << "    " << valueReadMethod << "elem);" << endl;
         out << indent << "    v.insert(elem);" << endl;
@@ -800,7 +800,7 @@ void readField(QTextStream & out, const Parser::Field & field, QString identPref
         QSharedPointer<Parser::Type> valueType = field.type.dynamicCast<Parser::MapType>()->valueType;
         QString valueReadMethod = typeToStr(valueType, identPrefix + field.name, MethodType::ReadMethod);
         QString valueThriftType = typeToStr(valueType, identPrefix + field.name, MethodType::ThriftFieldType);
-        out << indent << "quint32 size;" << endl;
+        out << indent << "qint32 size;" << endl;
         out << indent << "ThriftFieldType::type keyType;" << endl;
         out << indent << "ThriftFieldType::type elemType;" << endl;
         out << indent << "r.readMapBegin(keyType, elemType, size);" << endl;
@@ -808,7 +808,7 @@ void readField(QTextStream & out, const Parser::Field & field, QString identPref
             << identPrefix + field.name <<")\");" << endl;
         out << indent << "if(elemType != " << valueThriftType << ") throw ThriftException(ThriftException::Type::INVALID_DATA, \"Incorrect map value type ("
             << identPrefix + field.name <<")\");" << endl;
-        out << indent << "for(quint32 i = 0; i < size; i++) {" << endl;
+        out << indent << "for(qint32 i = 0; i < size; i++) {" << endl;
         out << indent << "    " << typeToStr(keyType, identPrefix + field.name, MethodType::ReadTypeName)  << " key;"<< endl;
         out << indent << "    " << keyReadMethod << "key);" << endl;
         out << indent << "    " << typeToStr(valueType, identPrefix + field.name, MethodType::ReadTypeName)  << " value;"<< endl;
