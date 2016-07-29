@@ -5,8 +5,15 @@
 #include <QMap>
 #include <QString>
 
-static const char * disclaimer = "// This file is generated from Evernote Thrift API "
-                                 "and is a part of the QEverCloud project";
+static const char * disclaimer = "/**\n"
+                                 " * Original work: Copyright (c) 2014 Sergey Skoblikov\n"
+                                 " * Modified work: Copyright (c) 2015-2016 Dmitry Ivanov\n"
+                                 " *\n"
+                                 " * This file is a part of QEverCloud project and is distributed under the terms of MIT license:\n"
+                                 " * https://opensource.org/licenses/MIT\n"
+                                 " *\n"
+                                 " * This file was generated from Evernote Thrift API\n"
+                                 " */\n";
 
 namespace {
     QStringList includeList;
