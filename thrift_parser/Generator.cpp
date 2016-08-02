@@ -57,10 +57,12 @@ void writeHeaderHeader(QTextStream & out, QString fileName,
 
     if (fileName != "EDAMErrorCode.h")
     {
-        out << "#include <qevercloud/Optional.h>" << endl;
-
         if (fileName != "types_impl.h") {
-            out << "#include <qevercloud/export.h>" << endl;
+            out << "#include \"../Optional.h\"" << endl;
+            out << "#include \"../export.h\"" << endl;
+        }
+        else {
+            out << "#include <Optional.h>" << endl;
         }
 
         for(const QString & include: additionalPreIncludes)
@@ -94,7 +96,7 @@ void writeHeaderHeader(QTextStream & out, QString fileName,
     }
     else
     {
-        out << "#include <qevercloud/export.h>" << endl;
+        out << "#include \"../export.h\"" << endl;
         out << endl;
     }
 
@@ -123,7 +125,7 @@ void writeBodyHeader(QTextStream& out, QString headerFileName, QStringList moreI
 {
     out << disclaimer << endl;
     out << endl;
-    out << "#include <qevercloud/generated/" << headerFileName << ">" << endl;
+    out << "#include <generated/" << headerFileName << ">" << endl;
     out << "#include \"../impl.h\"" << endl;
 
     for(const QString & include : moreIncludes)
@@ -1089,7 +1091,7 @@ void generateTypes(Parser * parser, QString outPath)
     QTextStream hout2(&headerFile2);
     hout2.setCodec("UTF-8");
 
-    writeHeaderHeader(hout2, headerFileName2, QStringList() << "<qevercloud/generated/types.h>" << "../impl.h");
+    writeHeaderHeader(hout2, headerFileName2, QStringList() << "<generated/types.h>" << "../impl.h");
 
     hout2 << "/** @cond HIDDEN_SYMBOLS  */" << endl << endl;
 
@@ -1225,9 +1227,9 @@ void generateServices(Parser * parser, QString outPath)
     QTextStream hout(&headerFile);
     hout.setCodec("UTF-8");
 
-    QStringList additionalPreIncludes = QStringList() << "<qevercloud/AsyncResult.h>"
-                                                      << "<qevercloud/generated/constants.h>"
-                                                      << "<qevercloud/generated/types.h>";
+    QStringList additionalPreIncludes = QStringList() << "../AsyncResult.h"
+                                                      << "constants.h"
+                                                      << "types.h";
     QStringList additionalPostIncludes = QStringList() << "<QObject>";
 
     writeHeaderHeader(hout, headerFileName, additionalPreIncludes, additionalPostIncludes);
