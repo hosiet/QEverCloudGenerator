@@ -20,6 +20,7 @@ namespace {
     QMap<QString, QString> typedefMap;
     QStringList baseTypes;
     QSet<QString> allstructs;
+    QSet<QString> allexceptions;
     QSet<QString> allenums;
 }
 
@@ -448,6 +449,23 @@ QString typeToStr(QSharedPointer<Parser::Type> type, QString identifier, MethodT
                         break;
                     case MethodType::ThriftFieldType:
                         result = "ThriftFieldType::T_I32";
+                        break;
+                    default:
+                        result = "";
+                    }
+                }
+                else if (allexceptions.contains(nameOfType))
+                {
+                    switch(methodType)
+                    {
+                    case MethodType::WriteMethod:
+                        result = "write" + nameOfType + "(w, ";
+                        break;
+                    case MethodType::ReadMethod:
+                        result = "read" + nameOfType + "(r, ";
+                        break;
+                    case MethodType::ThriftFieldType:
+                        result = "ThriftFieldType::T_STRUCT";
                         break;
                     default:
                         result = "";
@@ -934,6 +952,27 @@ void generateTypes(Parser * parser, QString outPath)
     }
     hout << endl;
 
+    for(const Parser::Structure & e : parser->exceptions())
+    {
+        if (!e.docComment.isEmpty()) {
+            hout << e.docComment << endl;
+        }
+
+        hout << "class QEVERCLOUD_EXPORT " << e.name << ": public EvernoteException"
+             << endl << "{" << endl << "public:" << endl;
+
+        for(const Parser::Field & f : e.fields) {
+            hout << "    " << fieldToStr(f) << ";" << endl;
+        }
+
+        hout << endl;
+        hout << "    " << e.name << "() {}" << endl;
+        hout << "    ~" << e.name << "() throw() {}" << endl;
+        hout << "    const char * what() const throw() Q_DECL_OVERRIDE;" << endl;
+        hout << "    virtual QSharedPointer<EverCloudExceptionData> exceptionData() const Q_DECL_OVERRIDE;" << endl;
+        hout << "};" << endl << endl;
+    }
+
     QSet<QString> safe;
     QList<Parser::Structure> ordered;
     QList<Parser::Structure> heap = parser->structures();
@@ -1047,27 +1086,6 @@ void generateTypes(Parser * parser, QString outPath)
 
     }
     hout << endl;
-
-    for(const Parser::Structure & e : parser->exceptions())
-    {
-        if (!e.docComment.isEmpty()) {
-            hout << e.docComment << endl;
-        }
-
-        hout << "class QEVERCLOUD_EXPORT " << e.name << ": public EvernoteException"
-             << endl << "{" << endl << "public:" << endl;
-
-        for(const Parser::Field & f : e.fields) {
-            hout << "    " << fieldToStr(f) << ";" << endl;
-        }
-
-        hout << endl;
-        hout << "    " << e.name << "() {}" << endl;
-        hout << "    ~" << e.name << "() throw() {}" << endl;
-        hout << "    const char * what() const throw() Q_DECL_OVERRIDE;" << endl;
-        hout << "    virtual QSharedPointer<EverCloudExceptionData> exceptionData() const Q_DECL_OVERRIDE;" << endl;
-        hout << "};" << endl << endl;
-    }
 
     writeHeaderFooter(houtEDAMErrorCode, EDAMErrorCodeHeaderFileName);
 
@@ -1598,6 +1616,10 @@ void generateSources(Parser * parser, QString outPath)
 
     for(const Parser::Structure & s : parser->structures()) {
         allstructs << s.name;
+    }
+
+    for(const Parser::Structure & e : parser->exceptions()) {
+        allexceptions << e.name;
     }
 
     for(const Parser::Enumeration & e : parser->enumerations()) {
