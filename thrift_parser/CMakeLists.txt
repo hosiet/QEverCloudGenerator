@@ -1,4 +1,8 @@
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 2.8.11)
+
+include(QEverCloudGeneratorCMakePolicies)
+SET_POLICIES()
+
 project(thrift_parser)
 
 set(HEADERS
@@ -28,11 +32,12 @@ add_custom_target(pre_build
 list(APPEND IDL_COMPILED_FILES "${CMAKE_CURRENT_BINARY_DIR}/thrift_lemon.h")
 list(APPEND IDL_COMPILED_FILES "${CMAKE_CURRENT_BINARY_DIR}/thrift_lemon.cpp")
 
-set_source_files_properties(${IDL_COMPILED_FILES}
-                            PROPERTIES GENERATED TRUE)
+set_source_files_properties(${IDL_COMPILED_FILES} PROPERTIES GENERATED TRUE)
 
-add_executable(${PROJECT_NAME} ${HEADERS} ${SOURCES} ${IDL_COMPILED_FILES})
-target_link_libraries(${PROJECT_NAME} ${QT_LIBRARIES})
+add_executable(QEverCloudGenerator ${HEADERS} ${SOURCES} ${IDL_COMPILED_FILES})
+target_link_libraries(QEverCloudGenerator ${QT_LIBRARIES})
 
-add_dependencies(${PROJECT_NAME} pre_build)
+add_dependencies(QEverCloudGenerator pre_build)
 
+# install executable
+install(TARGETS QEverCloudGenerator DESTINATION bin)

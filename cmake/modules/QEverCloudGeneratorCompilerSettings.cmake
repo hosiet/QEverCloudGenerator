@@ -6,7 +6,7 @@ if(CMAKE_COMPILER_IS_GNUCXX)
     set(CMAKE_CXX_FLAGS "-std=gnu++11 -fPIC ${CMAKE_CXX_FLAGS}")
     add_definitions("-DCPP11_COMPLIANT=1")
   else()
-    message(FATAL_ERROR "This version of GNU C++ compiler is known to not support C++11 standard as much as it is required 
+    message(FATAL_ERROR "This version of GNU C++ compiler is known to not support C++11 standard as much as it is required
                          to build this application. Consider upgrading the compiler to version 4.4 at least")
   endif()
 elseif(${CMAKE_CXX_COMPILER_ID} MATCHES "Clang")
@@ -32,8 +32,12 @@ elseif(${CMAKE_CXX_COMPILER_ID} MATCHES "Clang")
 elseif(${CMAKE_CXX_COMPILER_ID} STREQUAL "MSVC12")
   message(STATUS "Visual C++ 2013 compiler supports C++11 standard.")
   add_definitions("-DCPP11_COMPLIANT=1")
+elseif(${CMAKE_CXX_COMPILER_ID} STREQUAL "MSVC14")
+  message(STATUS "Visual C++ 2015 compiler supports C++11 standard.")
+  add_definitions("-DCPP11_COMPLIANT=1")
 else()
-  message(WARNING "Your C++ compiler is not officially supported for building of this application.
-                   If you'd get any compilation errors, consider upgrading to a compiler version
-                   which fully supports the C++11 standard.")
+  message(WARNING "Your C++ compiler is not recognized as the one compliant with C++11 standard.
+                   If you get any compilation errors, consider either switching to
+                   g++ >= 4.8, clang >= 3.1 or Visual Studio >= 2013 or upgrading
+                   your other compiler to some C++11 compliant version")
 endif(CMAKE_COMPILER_IS_GNUCXX)
